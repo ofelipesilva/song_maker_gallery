@@ -1,5 +1,6 @@
 ui_testing_data
 notes.md
+django_smg/screenshot_bot/firefox/*
 *.env
 main.js
 main.js.gz

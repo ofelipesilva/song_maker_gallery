@@ -12,12 +12,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, JavascriptException
-from selenium.webdriver.chrome.options import Options
 
 # django
 from django.core.files.storage import default_storage
 
-CHROME_DRIVER_PATH = os.path.join(os.path.dirname(__file__), 'chromedriver')
 FAILURE_PLACEHOLDER_URL = 'https://song-maker-gallery.s3.amazonaws.com/manually_added/fallback.png'
 URL_VALIDATION_REGEX = re.compile(
     r'http(s)?://musiclab.chromeexperiments.com/Song-Maker/song/(\d){16}'
@@ -31,12 +29,12 @@ def take_screenshots(array):
     every songmaker link. Replace placeholder with public url. Make sure
     that the image is a heavily compressed jpeg.
     """
-    chrome_options = Options()
-    chrome_options.add_argument('--headless')
-    chrome_options.add_argument('--window-size=1440x789')
-    driver = webdriver.Chrome(
-        options=chrome_options,
-        executable_path=CHROME_DRIVER_PATH
+    os.environ['MOZ_HEADLESS_WIDTH'] = '1440'
+    os.environ['MOZ_HEADLESS_HEIGHT'] = '789'
+    options = webdriver.FirefoxOptions()
+    options.add_argument('-headless')
+    driver = webdriver.Firefox(
+        options=options,
     )
 
     for group in array:

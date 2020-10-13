@@ -6,10 +6,8 @@ import logging
 import os
 from time import sleep
 import sys
-from django.core.mail import send_mail
 import django
-from teacher_admin.models import Gallery
-from .take_screenshots import take_screenshots
+from take_screenshots import take_screenshots
 
 # Same BASE_DIR as in settings.py. Django is not yet setup in daemon env.
 BASE_DIR = (
@@ -35,6 +33,9 @@ os.environ.setdefault(
 django.setup()
 
 # imports that need django setup first
+from django.apps import apps
+from django.core.mail import send_mail
+Gallery = apps.get_model('teacher_admin', 'Gallery')
 
 logger = logging.getLogger('file_logger')
 
@@ -63,22 +64,21 @@ def main():
     while True:
         todo = Gallery.objects.filter(
             needs_screenshot=True
-        ).update(
-            work_in_progress=True
         )
+        todo.update(work_in_progress=True)
         if todo:
             logger.info(
                 'Beginning to process galleries:\n\n'
                 + str([i.url_extension + '\n' for i in todo])
             )
             for index, gallery in enumerate(todo):
-                delta = datetime.now().timestamp() - todo.created.timestamp()
+                delta = datetime.now().timestamp() - gallery.created.timestamp()
                 if delta > 14400:
                     email_me(
                         'CRITICAL: Screenshot Bot has just completed a gallery '
                         f'that was created {delta // 60} hours ago. '
                         'The screenshot bot may be overloaded!',
-                        f'Galleries todo at start of loop:\t{len(todo)}\n\n'
+                        f'Galleries gallery at start of loop:\t{len(todo)}\n\n'
                         f'Galleries completed:\t\t{index}'
                         f'Galleries remaining:\t\t{len(todo) - index}'
                     )

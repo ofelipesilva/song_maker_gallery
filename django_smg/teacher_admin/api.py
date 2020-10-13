@@ -2,7 +2,6 @@ import os
 import logging
 from random import randint
 from requests import post
-from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import permissions
 from rest_framework.viewsets import ModelViewSet
@@ -27,20 +26,10 @@ class TeacherViewSet(ModelViewSet):
         return self.request.user.gallery.all()
 
     def perform_create(self, serializer):
-        logger.debug(
-            f'Requesting screenshots for the following galleries: {dir(serializer)}')
-        gallery = serializer.save(owner=self.request.user)
-        post_urls = [i + 'incoming/' for i in settings.SCREENSHOT_BOT_URLS]
-        post(
-            (
-                # send request to random handling server
-                post_urls[randint(0, (len(post_urls) - 1))]
-            ),
-            headers={
-                'Authorization': f'Token {os.getenv("CUSTOM_AUTH_TOKEN")}'},
-            data={'todo': JSONRenderer().render(
-                self.get_serializer(gallery).data)}
-        )
+        super().perform_create(serializer)
+        # logger.debug(
+        #     f'Requesting screenshots for the following galleries: {dir(serializer)}')
+        # gallery = serializer.save(owner=self.request.user)
 
     def destroy(self, request, *args, **kwargs):
         try:

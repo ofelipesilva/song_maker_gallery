@@ -21,7 +21,6 @@ services:
     build:
       context: ./django_smg/
       dockerfile: Dockerfiles/Dockerfile.web.development
-    image: django_smg
     volumes:
       - ./django_smg:/django_smg
     container_name: django_smg
@@ -34,5 +33,16 @@ services:
       - DEBUG=1 # note: this makes it into the STRING "true", not a boolean
     ports:
       - "8000:8000"
+    depends_on:
+      - db
+  screenshot_bot:
+    build:
+      context: ./django_smg
+      dockerfile: Dockerfiles/Dockerfile.screenshotter
+    container_name: screenshot_bot
+    volumes:
+      - ./django_smg:/django_smg
+    environment:
+      - MYSQL_PASSWORD
     depends_on:
       - db

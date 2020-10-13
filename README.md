@@ -1,3 +1,26 @@
+# ABOUT THIS BRANCH
+
+I started implementing the screenshot bot as a dockerized service. I also
+started changing the screenshot bot to use headless firefox instead of headless
+chrome because firefox has lower system requirements.
+
+### _however_
+
+I realized that a selenium-browser based screenshotting mechanism will always
+be too costly. Capturing, storing, and distributing screenshots requires a
+lot of infrastructure, and the goal is to serve this website as cheaply as
+possible so that it is as available to teachers as possible.
+
+Therefore, I'm suspending development towards this screenshoting mechanism
+and working on a midi parser instead.
+
+I'm creating this branch to save my progress since the firefox screenshotting
+mechanism is almost fully implemented. I got all the tests to pass once, but
+for some reason the docker container isn't currently building. Theoretically,
+if the docker container builds, the tests will pass and the screenshotter will
+work.
+
+
 # Welcome to the Music Lab Song Maker Gallery!
 
 This website was created by me, a music teacher, in response to the simple

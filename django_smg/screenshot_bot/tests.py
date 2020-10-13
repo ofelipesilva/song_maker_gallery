@@ -39,7 +39,8 @@ class TestTakeScreenshots(TestCase):
             r'https://song-maker-gallery.s3.amazonaws.com/(screenshots/(\d){4}-(\d){1,2}-(\d){1,2}/(.*).jpg)'
         )
         url = self.array[0][0][2]
-        self.assertFalse("month" in url)
+        if url == 'https://song-maker-gallery.s3.amazonaws.com/manually_added/fallback.png':
+            return '/manually_added/fallback.png'
         mo = re.search(reg, url)
         if mo:
             return mo[1]
@@ -88,6 +89,9 @@ class TestMutateGallery(TestCase):
             r'https://song-maker-gallery.s3.amazonaws.com/(screenshots/(\d){4}-(\d){1,2}-(\d){1,2}/(.*).jpg)'
         )
         url = self.gallery.api_obj[0][0][2]
+        if url == 'https://song-maker-gallery.s3.amazonaws.com/manually_added/fallback.png':
+            return '/manually_added/fallback.png'
+        self.assertRegex(url, reg)
         return re.search(reg, url)[1]
 
     def test_gallery_boolean_attributes_properly_mutated(self):

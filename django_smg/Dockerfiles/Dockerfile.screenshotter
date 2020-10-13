@@ -1,34 +1,45 @@
-FROM scrapinghub/splash
+ARG tag=v1.15.0
+FROM jlesage/firefox:$tag
 
-# FROM python3.7:stretch
+# install geckodriver
+# Get all the prereqs
+RUN wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub
+RUN wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.30-r0/glibc-2.30-r0.apk
+RUN wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.30-r0/glibc-bin-2.30-r0.apk
+RUN apk add glibc-2.30-r0.apk
+RUN apk add glibc-bin-2.30-r0.apk
 
-# LABEL MAINTAINER Anthony Rozon <arozonm@gmail.com>
-# # Install dependencies
-# RUN apt-get update && apt-get install -y --no-install-recommends \
-#     xvfb \
-#     unzip \
-#     openjdk-8-jre-headless
+# And of course we need Firefox if we actually want to *use* GeckoDriver
+RUN apk add firefox-esr=60.9.0-r0
 
-# # Install Chrome
-# RUN curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add
-# RUN echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list
-# RUN apt-get -y update && apt-get -y install google-chrome-stable --no-install-recommends
+# Then install GeckoDriver
+RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.26.0/geckodriver-v0.26.0-linux64.tar.gz
+RUN tar -zxf geckodriver-v0.26.0-linux64.tar.gz -C /usr/bin
 
-# # Setup version variables
-# ENV CHROMEDRIVER_VERSION 81.0.4044.69
-# ENV ALLURE_VERSION 2.13.3
-
-# # Download ChromeDriver
-# RUN wget https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip
-# RUN unzip chromedriver_linux64.zip
-# RUN rm chromedriver_linux64.zip
-
-# # Install ChromeDriver
-# RUN mv chromedriver /usr/local/bin/chromedriver
-# RUN chown root:root /usr/local/bin/chromedriver
-# RUN chmod 0755 /usr/local/bin/chromedriver
-
-# # Download Allure binaries
-# RUN wget -O allure-${ALLURE_VERSION}.zip https://dl.bintray.com/qameta/maven/io/qameta/allure/allure-commandline/${ALLURE_VERSION}/allure-commandline-${ALLURE_VERSION}.zip
-# RUN unzip allure-${ALLURE_VERSION}.zip
-# RUN rm allure-${ALLURE_VERSION}.zip
+# install python, python dependencies, and pip packages
+ENV PYTHONBUFFERED=1
+RUN apk add linux-headers
+RUN apk add --update --upgrade --no-cache \
+    # DEV
+    bash \
+    # python
+    python3-dev \
+    # mod_wsgi
+    apache2-dev \
+    # python-cryptography
+    gcc musl-dev \
+    python3-dev \
+    libffi-dev \
+    openssl-dev \
+    # python-pillow
+    zlib-dev \
+    jpeg-dev \
+    && ln -sf python3 /usr/bin/python
+RUN python3 -m ensurepip
+RUN pip3 install --no-cache --upgrade pip setuptools
+# RUN mkdir /django_smg                                      # production only; volume will be mounted for development
+# WORKDIR /django_smg                                      # production only; volume will be mounted for development
+COPY ./requirements.txt ./requirements.txt
+RUN pip3 install -r requirements.txt
+# COPY . .                                      # production only; volume will be mounted for development
+CMD ["python", "/django_smg/screenshot_bot/sc_daemon.py"]

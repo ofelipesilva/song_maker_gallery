@@ -1,6 +1,11 @@
 """
 Perform database migrations and create superuser after database is available.
 """
+from teacher_admin.models import Gallery
+from django.db.utils import DatabaseError, IntegrityError
+from django.core.management import call_command
+from django.db import connection
+from django.contrib.auth.models import User
 import json
 import string
 from random import randint
@@ -23,12 +28,6 @@ os.environ.setdefault(
     'django_smg.settings'
 )
 django_setup()
-
-from django.contrib.auth.models import User
-from django.db import connection
-from django.core.management import call_command
-from django.db.utils import DatabaseError, IntegrityError
-from teacher_admin.models import Gallery
 
 
 def migrate():
@@ -53,6 +52,8 @@ def create_superuser():
         'email': os.getenv('DJANGO_SUPERUSER_EMAIL'),
         'password': os.getenv('DJANGO_SUPERUSER_PASSWORD'),
     }
+    if creds['username'] in User.objects.all():
+        return
     for val in creds.values():
         if not val:
             print(
@@ -70,6 +71,7 @@ def create_superuser():
         user.password = creds.get('password')
         user.save()
 
+
 def create_default_gallery():
     with open('teacher_admin/sample_gallery.json', 'r') as jsn:
         api_obj = json.load(jsn)
@@ -81,20 +83,24 @@ def create_default_gallery():
             string.printable[:84][randint(0, 83)] for i in range(20)
         )
     )
-    Gallery.objects.create(
-        owner=user,
-        title='Sample Gallery',
-        description=(
-            'This is an example of what one of our galleries look like. You '
-            'enter your own title, put your own description here, and enter '
-            'the names for your groups of students in whatever way makes sense '
-            'to you. We automatically take screenshots of your students\' '
-            'work, and put together this beautiful gallery to put their '
-            'talents on display!'
-        ),
-        api_obj=api_obj,
-        url_extension="sample-gallery"
-    ).save()
+    try:
+        Gallery.objects.create(
+            owner=user,
+            title='Sample Gallery',
+            description=(
+                'This is an example of what one of our galleries look like. You '
+                'enter your own title, put your own description here, and enter '
+                'the names for your groups of students in whatever way makes sense '
+                'to you. We automatically take screenshots of your students\' '
+                'work, and put together this beautiful gallery to put their '
+                'talents on display!'
+            ),
+            api_obj=api_obj,
+            url_extension="sample-gallery"
+        ).save()
+    except IntegrityError:
+        print('Sample Gallery not created; already exists in database')
+        pass
 
 
 def main():
